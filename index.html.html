@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="포모도로"/>
+<meta name="theme-color" content="#ffffff"/>
+<title>포모도로 타이머</title>
+<link rel="manifest" href="manifest.json"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:#1a1a1a;min-height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+@media(prefers-color-scheme:dark){body{background:#1a1a1a;color:#f0f0f0}.card{background:#2a2a2a;border-color:#333}.mode-tabs{background:#2a2a2a}.mode-tab.active{background:#1a1a1a}.stat{background:#2a2a2a}.log-item{color:#aaa}.setting-card{background:#2a2a2a;border-color:#333}input{color:#f0f0f0}::placeholder{color:#666}}
+.root{max-width:480px;margin:0 auto;padding:1.5rem 1rem 3rem}
+h1{font-size:22px;font-weight:500;margin-bottom:4px}
+.sub{font-size:13px;color:#888;margin-bottom:1.5rem}
+.divider{border:none;border-top:1px solid #e8e8e8;margin:0 0 1.5rem}
+@media(prefers-color-scheme:dark){.divider{border-color:#333}}
+.settings-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.5rem}
+.setting-card{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:10px;text-align:center}
+.setting-lbl{font-size:11px;color:#888;margin-bottom:4px}
+.setting-card input{width:100%;font-size:20px;font-weight:500;border:none;background:transparent;outline:none;text-align:center;color:inherit}
+.task-row{display:flex;gap:8px;margin-bottom:1.5rem}
+.task-row input{flex:1;font-size:14px;padding:10px 12px;border:1px solid #e0e0e0;border-radius:10px;background:transparent;color:inherit;outline:none}
+@media(prefers-color-scheme:dark){.task-row input{border-color:#444}}
+.task-row input:focus{border-color:#5DCAA5}
+.task-btn{padding:0 16px;font-size:13px;border:1px solid #e0e0e0;border-radius:10px;background:transparent;color:inherit;cursor:pointer}
+.mode-tabs{display:flex;gap:2px;background:#f2f2f2;border-radius:10px;padding:3px;margin-bottom:2rem}
+.mode-tab{flex:1;padding:8px 0;font-size:13px;border:none;background:transparent;border-radius:8px;cursor:pointer;color:#888;font-family:inherit;transition:all .15s}
+.mode-tab.active{background:#fff;color:#1a1a1a;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+@media(prefers-color-scheme:dark){.mode-tab.active{background:#3a3a3a;color:#f0f0f0;box-shadow:none}}
+.timer-center{display:flex;flex-direction:column;align-items:center;margin-bottom:2rem}
+.current-task{font-size:13px;color:#888;margin-bottom:1rem;min-height:18px}
+.ring-wrap{position:relative;width:220px;height:220px;margin-bottom:1.5rem}
+.ring-wrap svg{width:220px;height:220px;transform:rotate(-90deg)}
+.time-display{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.time-num{font-size:48px;font-weight:500;letter-spacing:-2px;font-variant-numeric:tabular-nums}
+.time-lbl{font-size:12px;color:#888;margin-top:2px}
+.ctrl-row{display:flex;align-items:center;gap:12px}
+.btn-main{display:flex;align-items:center;gap:8px;padding:12px 32px;font-size:15px;font-weight:500;border:1px solid #ddd;border-radius:12px;background:transparent;color:inherit;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-main:active{background:#f0f0f0}
+.btn-icon{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #e0e0e0;border-radius:10px;background:transparent;cursor:pointer;color:#888;font-size:18px;transition:background .15s}
+.btn-icon:active{background:#f0f0f0}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.5rem}
+.stat{background:#f8f8f8;border-radius:10px;padding:12px;text-align:center}
+.stat-val{font-size:20px;font-weight:500}
+.stat-lbl{font-size:11px;color:#888;margin-top:2px}
+.log-section{border-top:1px solid #e8e8e8;padding-top:1.25rem}
+@media(prefers-color-scheme:dark){.log-section{border-color:#333}}
+.log-heading{font-size:12px;font-weight:500;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.log-list{display:flex;flex-direction:column;gap:2px}
+.log-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:14px}
+.log-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.log-time{font-size:12px;color:#aaa;margin-left:auto;font-variant-numeric:tabular-nums}
+.empty-log{font-size:13px;color:#bbb;padding:6px 10px}
+</style>
+</head>
+<body>
+<div class="root">
+  <h1>집중 세션</h1>
+  <p class="sub">오늘도 한 블록씩 차근차근.</p>
+  <hr class="divider"/>
+
+  <div class="settings-row">
+    <div class="setting-card">
+      <div class="setting-lbl">집중</div>
+      <input type="number" id="set-focus" value="25" min="1" max="90" onchange="applySettings()"/>
+      <div style="font-size:11px;color:#bbb">분</div>
+    </div>
+    <div class="setting-card">
+      <div class="setting-lbl">짧은 휴식</div>
+      <input type="number" id="set-short" value="5" min="1" max="30" onchange="applySettings()"/>
+      <div style="font-size:11px;color:#bbb">분</div>
+    </div>
+    <div class="setting-card">
+      <div class="setting-lbl">긴 휴식</div>
+      <input type="number" id="set-long" value="15" min="1" max="60" onchange="applySettings()"/>
+      <div style="font-size:11px;color:#bbb">분</div>
+    </div>
+  </div>
+
+  <div class="task-row">
+    <input type="text" id="task-inp" placeholder="지금 집중할 작업..." maxlength="40" onkeydown="if(event.key==='Enter')setTask()"/>
+    <button class="task-btn" onclick="setTask()">설정</button>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="switchMode('focus',this)">집중</button>
+    <button class="mode-tab" onclick="switchMode('short',this)">짧은 휴식</button>
+    <button class="mode-tab" onclick="switchMode('long',this)">긴 휴식</button>
+  </div>
+
+  <div class="timer-center">
+    <div class="current-task" id="current-task">—</div>
+    <div class="ring-wrap">
+      <svg viewBox="0 0 220 220">
+        <circle fill="none" stroke="#e8e8e8" stroke-width="4" cx="110" cy="110" r="96"/>
+        <circle fill="none" stroke-width="4" stroke-linecap="round" id="ring"
+          cx="110" cy="110" r="96"
+          stroke="#5DCAA5"
+          stroke-dasharray="603"
+          stroke-dashoffset="0"
+          style="transition:stroke-dashoffset .8s linear,stroke .4s"/>
+      </svg>
+      <div class="time-display">
+        <div class="time-num" id="time-num">25:00</div>
+        <div class="time-lbl" id="time-lbl">집중</div>
+      </div>
+    </div>
+    <div class="ctrl-row">
+      <button class="btn-icon" onclick="resetTimer()" aria-label="초기화">↺</button>
+      <button class="btn-main" id="btn-play" onclick="toggleTimer()">
+        <span id="play-icon">▶</span>
+        <span id="play-label">시작</span>
+      </button>
+      <button class="btn-icon" onclick="skipMode()" aria-label="건너뛰기">⏭</button>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat"><div class="stat-val" id="stat-sessions">0</div><div class="stat-lbl">완료 세션</div></div>
+    <div class="stat"><div class="stat-val" id="stat-focus">0분</div><div class="stat-lbl">총 집중</div></div>
+    <div class="stat"><div class="stat-val" id="stat-streak">0</div><div class="stat-lbl">연속 집중</div></div>
+  </div>
+
+  <div class="log-section">
+    <div class="log-heading">오늘의 기록</div>
+    <div class="log-list" id="log-list"><div class="empty-log">아직 완료된 세션이 없습니다.</div></div>
+  </div>
+</div>
+
+<script>
+const CIRC = 2 * Math.PI * 96;
+const MODES = {focus:{label:'집중',color:'#5DCAA5'},short:{label:'짧은 휴식',color:'#7F77DD'},long:{label:'긴 휴식',color:'#378ADD'}};
+let mode='focus', durations={focus:25*60,short:5*60,long:15*60};
+let remaining=durations.focus, total=durations.focus;
+let running=false, timer=null;
+let sessions=0, focusMin=0, streak=0, logs=[];
+let currentTask='';
+
+function applySettings(){
+  durations.focus=(parseInt(document.getElementById('set-focus').value)||25)*60;
+  durations.short=(parseInt(document.getElementById('set-short').value)||5)*60;
+  durations.long=(parseInt(document.getElementById('set-long').value)||15)*60;
+  if(!running){remaining=durations[mode];total=durations[mode];updateDisplay();}
+}
+function setTask(){
+  currentTask=document.getElementById('task-inp').value.trim();
+  document.getElementById('current-task').textContent=currentTask||'—';
+  document.getElementById('task-inp').blur();
+}
+function switchMode(m,el){
+  if(running){clearInterval(timer);running=false;}
+  mode=m; remaining=durations[m]; total=durations[m];
+  document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  updateDisplay(); setPlayState(false);
+}
+function toggleTimer(){
+  if(running){clearInterval(timer);running=false;setPlayState(false);}
+  else{running=true;setPlayState(true);tick();timer=setInterval(tick,1000);}
+}
+function tick(){
+  if(remaining<=0){finish();return;}
+  remaining--; updateDisplay();
+  if('setAppBadge' in navigator) navigator.setAppBadge(Math.ceil(remaining/60));
+}
+function finish(){
+  clearInterval(timer);running=false;setPlayState(false);
+  if('clearAppBadge' in navigator) navigator.clearAppBadge();
+  if(Notification.permission==='granted'){
+    new Notification(mode==='focus'?'집중 완료! 휴식을 취하세요.':'휴식 완료! 다시 집중할 시간입니다.',{icon:'icon-192.png'});
+  }
+  if(mode==='focus'){
+    sessions++; focusMin+=Math.round(durations.focus/60); streak++;
+    const t=new Date(), ts=t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0');
+    logs.unshift({label:currentTask||'집중 세션',time:ts,color:'#5DCAA5'});
+    document.getElementById('stat-sessions').textContent=sessions;
+    document.getElementById('stat-focus').textContent=focusMin+'분';
+    document.getElementById('stat-streak').textContent=streak;
+    updateLog();
+  } else {
+    const t=new Date(), ts=t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0');
+    logs.unshift({label:mode==='short'?'짧은 휴식':'긴 휴식',time:ts,color:'#7F77DD'});
+    updateLog();
+  }
+  remaining=durations[mode]; total=durations[mode]; updateDisplay();
+}
+function resetTimer(){clearInterval(timer);running=false;remaining=durations[mode];total=durations[mode];setPlayState(false);updateDisplay();}
+function skipMode(){
+  clearInterval(timer);running=false;setPlayState(false);
+  const order=['focus','short','long'];
+  mode=order[(order.indexOf(mode)+1)%3];
+  remaining=durations[mode];total=durations[mode];
+  document.querySelectorAll('.mode-tab').forEach((t,i)=>t.classList.toggle('active',['focus','short','long'][i]===mode));
+  updateDisplay();
+}
+function updateDisplay(){
+  const m=Math.floor(remaining/60).toString().padStart(2,'0');
+  const s=(remaining%60).toString().padStart(2,'0');
+  document.getElementById('time-num').textContent=m+':'+s;
+  document.getElementById('time-lbl').textContent=MODES[mode].label;
+  document.title=m+':'+s+' — 포모도로';
+  const offset=CIRC*(1-remaining/total);
+  const ring=document.getElementById('ring');
+  ring.style.strokeDashoffset=offset; ring.style.stroke=MODES[mode].color;
+}
+function setPlayState(on){
+  document.getElementById('play-icon').textContent=on?'⏸':'▶';
+  document.getElementById('play-label').textContent=on?'일시정지':'시작';
+}
+function updateLog(){
+  if(!logs.length)return;
+  document.getElementById('log-list').innerHTML=logs.slice(0,10).map(l=>`
+    <div class="log-item"><div class="log-dot" style="background:${l.color}"></div><span>${l.label}</span><span class="log-time">${l.time}</span></div>`).join('');
+}
+if('Notification' in window && Notification.permission==='default') Notification.requestPermission();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+updateDisplay();
+</script>
+</body>
+</html>
